@@ -1,13 +1,17 @@
 import { ipcMain } from 'electron'
 import WebSocket from 'ws'
-import { randomUUID } from 'node:crypto'
 
-const WS_URL = 'wss://dashscope.aliyuncs.com/api-ws/v1/inference/'
+const SAMPLE_RATE = 16000
+const SPEECH_MODEL = 'universal-3-5-pro'
+const WS_URL =
+  `wss://streaming.assemblyai.com/v3/ws?sample_rate=${SAMPLE_RATE}` +
+  `&speech_model=${SPEECH_MODEL}&format_turns=true`
 
 let ws: WebSocket | null = null
-let taskId: string | null = null
 let isTranscribing = false
-let taskStarted = false
+let sessionReady = false
+let stopping = false
+let terminationTimer: ReturnType<typeof setTimeout> | null = null
 let accumulatedText = ''
 let currentPartial = ''
 
@@ -18,7 +22,28 @@ function sendToRenderer(channel: string, ...args: unknown[]) {
   }
 }
 
+function normalizeApiKey(apiKey: string): string {
+  return apiKey.trim().replace(/^Bearer\s+/i, '')
+}
+
+function appendTranscript(text: string): void {
+  const trimmed = text.trim()
+  if (!trimmed) return
+  accumulatedText += `${accumulatedText ? ' ' : ''}${trimmed}`
+}
+
+function emitTranscriptionText(isPartial: boolean): void {
+  sendToRenderer('transcription-text', {
+    text: getTranscriptionText(),
+    isPartial
+  })
+}
+
 function cleanup() {
+  if (terminationTimer) {
+    clearTimeout(terminationTimer)
+    terminationTimer = null
+  }
   if (ws) {
     ws.removeAllListeners()
     if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
@@ -26,146 +51,147 @@ function cleanup() {
     }
     ws = null
   }
-  taskId = null
   isTranscribing = false
-  taskStarted = false
+  sessionReady = false
+  stopping = false
+}
+
+function finishTranscription() {
+  appendTranscript(currentPartial)
+  currentPartial = ''
+  cleanup()
+  emitTranscriptionText(false)
+  sendToRenderer('transcription-stopped')
 }
 
 function startTranscription(apiKey: string) {
   if (isTranscribing) return
 
+  const normalizedApiKey = normalizeApiKey(apiKey)
+  if (!normalizedApiKey) {
+    sendToRenderer('transcription-error', 'Configure your AssemblyAI API key in Settings first')
+    sendToRenderer('transcription-stopped')
+    return
+  }
+
   cleanup()
+  currentPartial = ''
   isTranscribing = true
-  taskId = randomUUID()
 
   ws = new WebSocket(WS_URL, {
-    headers: { Authorization: `bearer ${apiKey}` }
-  })
-
-  ws.on('open', () => {
-    const runTask = {
-      header: {
-        action: 'run-task',
-        task_id: taskId,
-        streaming: 'duplex'
-      },
-      payload: {
-        task_group: 'audio',
-        task: 'asr',
-        function: 'recognition',
-        model: 'fun-asr-realtime',
-        parameters: {
-          format: 'pcm',
-          sample_rate: 16000
-        },
-        input: {}
-      }
-    }
-    ws!.send(JSON.stringify(runTask))
+    headers: { Authorization: normalizedApiKey }
   })
 
   ws.on('message', (data: WebSocket.Data) => {
     try {
-      const msg = JSON.parse(data.toString())
-      const event = msg.header?.event
+      const event = JSON.parse(data.toString())
 
-      if (event === 'task-started') {
-        taskStarted = true
+      if (event.type === 'Begin') {
+        sessionReady = true
         return
       }
 
-      if (event === 'result-generated') {
-        const sentence = msg.payload?.output?.sentence
-        if (!sentence) return
-
-        const text: string = sentence.text || ''
-        const sentenceEnd: boolean = sentence.sentence_end === true
-
-        if (sentenceEnd) {
-          if (text) {
-            accumulatedText += (accumulatedText ? '' : '') + text
-          }
+      if (event.type === 'Turn') {
+        const transcript = typeof event.transcript === 'string' ? event.transcript : ''
+        if (event.end_of_turn === true) {
+          appendTranscript(transcript)
           currentPartial = ''
+          emitTranscriptionText(false)
         } else {
-          currentPartial = text
+          currentPartial = transcript
+          emitTranscriptionText(true)
         }
-
-        sendToRenderer('transcription-text', {
-          text: getTranscriptionText(),
-          isPartial: !sentenceEnd
-        })
         return
       }
 
-      if (event === 'task-failed') {
-        const errorMsg = msg.header?.error_message || '语音识别失败'
-        console.error('Transcription task failed:', errorMsg)
-        sendToRenderer('transcription-error', errorMsg)
-        cleanup()
-        sendToRenderer('transcription-stopped')
+      if (event.type === 'Termination') {
+        finishTranscription()
         return
       }
 
-      if (event === 'task-finished') {
+      if (event.type === 'Error') {
+        const errorMessage = event.error || event.message || 'AssemblyAI transcription failed'
+        console.error('AssemblyAI transcription error:', errorMessage)
+        sendToRenderer('transcription-error', errorMessage)
         cleanup()
         sendToRenderer('transcription-stopped')
       }
-    } catch (e) {
-      console.error('Failed to parse transcription message:', e)
+    } catch (error) {
+      console.error('Failed to parse AssemblyAI transcription message:', error)
     }
   })
 
-  ws.on('error', (err) => {
-    console.error('Transcription WebSocket error:', err)
-    sendToRenderer('transcription-error', err.message || 'WebSocket 连接失败')
+  ws.on('error', (error) => {
+    console.error('AssemblyAI transcription WebSocket error:', error)
+    sendToRenderer('transcription-error', error.message || 'WebSocket connection failed')
     cleanup()
     sendToRenderer('transcription-stopped')
   })
 
-  ws.on('close', () => {
-    if (isTranscribing) {
-      isTranscribing = false
-      sendToRenderer('transcription-stopped')
+  ws.on('close', (code, reason) => {
+    const wasActive = isTranscribing || stopping
+    const stoppedNormally = stopping || code === 1000
+    if (terminationTimer) {
+      clearTimeout(terminationTimer)
+      terminationTimer = null
     }
     ws = null
-    taskStarted = false
+    sessionReady = false
+    isTranscribing = false
+    stopping = false
+
+    if (wasActive) {
+      appendTranscript(currentPartial)
+      currentPartial = ''
+      emitTranscriptionText(false)
+      if (!stoppedNormally) {
+        const detail = reason.toString().trim()
+        sendToRenderer(
+          'transcription-error',
+          detail || `AssemblyAI transcription connection closed (${code})`
+        )
+      }
+      sendToRenderer('transcription-stopped')
+    }
   })
 }
 
 function stopTranscription() {
-  if (!isTranscribing) return
-
-  if (ws && ws.readyState === WebSocket.OPEN && taskId && taskStarted) {
-    const finishTask = {
-      header: {
-        action: 'finish-task',
-        task_id: taskId,
-        streaming: 'duplex'
-      },
-      payload: {
-        input: {}
-      }
-    }
-    ws.send(JSON.stringify(finishTask))
-  }
+  if (!isTranscribing && !stopping) return
 
   isTranscribing = false
-  cleanup()
-  sendToRenderer('transcription-stopped')
+  stopping = true
+
+  if (ws && ws.readyState === WebSocket.OPEN && sessionReady) {
+    ws.send(JSON.stringify({ type: 'Terminate' }))
+    terminationTimer = setTimeout(() => finishTranscription(), 2000)
+    return
+  }
+
+  finishTranscription()
 }
 
 function handleAudioChunk(chunk: ArrayBuffer) {
-  if (!ws || ws.readyState !== WebSocket.OPEN || !taskStarted) return
+  if (!ws || ws.readyState !== WebSocket.OPEN || !sessionReady || stopping) return
   ws.send(Buffer.from(chunk))
 }
 
 export function getTranscriptionText(): string {
-  return accumulatedText + currentPartial
+  const partial = currentPartial.trim()
+  return `${accumulatedText}${accumulatedText && partial ? ' ' : ''}${partial}`
 }
 
 export function clearTranscriptionText() {
   accumulatedText = ''
   currentPartial = ''
+}
+
+/** Stop the active transcription connection and discard all text immediately. */
+export function resetTranscriptionSession() {
+  cleanup()
+  clearTranscriptionText()
+  sendToRenderer('transcription-cleared')
+  sendToRenderer('transcription-stopped')
 }
 
 ipcMain.handle('start-transcription', (_event, apiKey: string) => {

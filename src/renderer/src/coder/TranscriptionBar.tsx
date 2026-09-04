@@ -1,10 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { Mic } from 'lucide-react'
 import { useTranscriptionStore } from '@/lib/store/transcription'
+import { useSettingsStore } from '@/lib/store/settings'
 
 export function TranscriptionBar() {
   const { isTranscribing, transcriptionText } = useTranscriptionStore()
+  const audioInputDeviceId = useSettingsStore((state) => state.audioInputDeviceId)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const waitingMessage = audioInputDeviceId
+    ? 'Waiting for speech from the selected microphone...'
+    : 'Waiting for system audio (microphone is not selected)...'
 
   useEffect(() => {
     const el = scrollRef.current
@@ -23,7 +28,7 @@ export function TranscriptionBar() {
           ref={scrollRef}
           className="transcription-scroll text-sm text-gray-300 max-h-[4.2em] overflow-y-auto leading-[1.4em] flex-1 whitespace-pre-wrap break-words"
         >
-          {transcriptionText || (isTranscribing ? '等待语音输入...' : '')}
+          {transcriptionText || (isTranscribing ? waitingMessage : '')}
         </div>
       </div>
     </div>

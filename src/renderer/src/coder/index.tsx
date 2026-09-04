@@ -12,7 +12,7 @@ import { PrerequisitesChecker } from './PrerequisitesChecker'
 import { TranscriptionBar } from './TranscriptionBar'
 
 export default function CoderPage() {
-  const { opacity, dashscopeApiKey } = useSettingsStore()
+  const { opacity, assemblyaiApiKey } = useSettingsStore()
   const { syncAppState } = useAppStore()
   const { isTranscribing, setIsTranscribing, setTranscriptionText, clearText } =
     useTranscriptionStore()
@@ -57,19 +57,20 @@ export default function CoderPage() {
         await window.api.stopTranscription()
         setIsTranscribing(false)
       } else {
-        if (!dashscopeApiKey) {
-          setErrorMessage('请先在设置中配置百炼平台 API Key')
+        if (!assemblyaiApiKey) {
+          setErrorMessage('Configure your AssemblyAI API key in Settings first')
           return
         }
         try {
           await startAudioCapture()
-          await window.api.startTranscription(dashscopeApiKey)
+          await window.api.startTranscription(assemblyaiApiKey)
           setIsTranscribing(true)
           setErrorMessage(null)
         } catch (err) {
           console.error('Failed to start transcription:', err)
           stopAudioCapture()
-          setErrorMessage('启动语音转录失败，请检查系统音频权限')
+          const detail = err instanceof Error ? err.message : 'Unknown audio capture error'
+          setErrorMessage(`Could not start transcription: ${detail}`)
         }
       }
     }
@@ -78,7 +79,7 @@ export default function CoderPage() {
     return () => {
       window.api.removeToggleTranscriptionListener()
     }
-  }, [isTranscribing, dashscopeApiKey, setIsTranscribing, setErrorMessage])
+  }, [isTranscribing, assemblyaiApiKey, setIsTranscribing, setErrorMessage])
 
   useEffect(() => {
     window.api.onTranscriptionText((data) => {
@@ -91,9 +92,11 @@ export default function CoderPage() {
     })
     window.api.onTranscriptionStopped(() => {
       setIsTranscribing(false)
+      stopAudioCapture()
     })
     window.api.onTranscriptionCleared(() => {
       clearText()
+      setErrorMessage(null)
     })
 
     return () => {

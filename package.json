@@ -1,7 +1,7 @@
 {
   "name": "interview-coder-cn",
   "version": "2.0.2",
-  "description": "截屏解题助手，实时截屏并生成解题思路和答案",
+  "description": "A screenshot assistant that analyzes the screen and generates solutions in real time",
   "main": "./out/main/index.js",
   "devEngines": {
     "packageManager": {
@@ -28,10 +28,10 @@
     "url": "git+https://github.com/ooboqoo/interview-coder-cn.git"
   },
   "keywords": [
-    "解题助手",
-    "面试",
-    "在线考试",
-    "截屏",
+    "problem solver",
+    "interview",
+    "online exam",
+    "screenshot",
     "coding interview",
     "LeetCode"
   ],

@@ -88,7 +88,7 @@ export function SelectModel({
           className={cn('w-60 justify-between overflow-hidden', className)}
         >
           <span className="truncate">
-            {value ? (models.find((m) => m.value === value)?.label ?? value) : '选择模型...'}
+            {value ? (models.find((m) => m.value === value)?.label ?? value) : 'Select a model...'}
           </span>
           <ChevronsUpDown className="opacity-50" />
         </Button>
@@ -96,13 +96,13 @@ export function SelectModel({
       <PopoverContent className="w-auto min-w-60 max-w-[26rem] p-0">
         <Command>
           <CommandInput
-            placeholder="输入以搜索或创建..."
+            placeholder="Search or enter a model..."
             className="h-9"
             value={searchValue}
             onValueChange={setSearchValue}
           />
           <CommandList>
-            <CommandEmpty>未找到结果</CommandEmpty>
+            <CommandEmpty>No models found</CommandEmpty>
             <CommandGroup>
               {filtered.map((m) => (
                 <div key={m.value} className="group flex">
@@ -139,7 +139,7 @@ export function SelectModel({
                   className="!text-blue-600"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  创建 “{searchValue}”
+                  Add “{searchValue}”
                 </CommandItem>
               )}
             </CommandGroup>

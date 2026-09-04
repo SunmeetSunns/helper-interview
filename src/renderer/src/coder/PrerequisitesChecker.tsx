@@ -4,6 +4,8 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useSettingsStore } from '@/lib/store/settings'
 import { Button } from '@/components/ui/button'
 
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+
 export function PrerequisitesChecker() {
   const navigate = useNavigate()
   const { apiKey, apiBaseURL, updateSetting } = useSettingsStore()
@@ -11,13 +13,16 @@ export function PrerequisitesChecker() {
   const [inputApiBaseURL, setInputApiBaseURL] = useState(apiBaseURL)
   const [showApiKey, setShowApiKey] = useState(false)
 
-  const saveApiKey = () => {
-    if (inputApiKey.trim()) {
-      updateSetting('apiKey', inputApiKey.trim())
-    }
-    if (inputApiBaseURL.trim()) {
-      updateSetting('apiBaseURL', inputApiBaseURL.trim())
-    }
+  const saveApiSettings = async () => {
+    const apiKey = inputApiKey.trim().replace(/^Bearer\s+/i, '')
+    const configuredBaseURL = inputApiBaseURL.trim().replace(/\/+$/, '')
+    const apiBaseURL = configuredBaseURL || (apiKey.startsWith('sk-or-') ? OPENROUTER_BASE_URL : '')
+
+    // Sync credentials before hiding the setup screen. The global screenshot
+    // shortcut runs in the main process and may otherwise beat App's effect sync.
+    await window.api.updateAppSettings({ apiKey, apiBaseURL })
+    updateSetting('apiKey', apiKey)
+    updateSetting('apiBaseURL', apiBaseURL)
   }
 
   // If apiKey exists, skip this checker
@@ -28,18 +33,18 @@ export function PrerequisitesChecker() {
   return (
     <div className="fixed top-9 left-0 right-0 bottom-0 flex bg-black/50">
       <div className="m-auto bg-white rounded-lg p-6 pt-1 w-120 shadow-lg">
-        <h1 className="text-xl font-bold text-center mb-2">欢迎使用截屏解题助手</h1>
+        <h1 className="text-xl font-bold text-center mb-2">Welcome to Screenshot Assistant</h1>
         <div className="text-sm text-gray-600">
-          请先配置大模型聚合平台信息，如国内的
+          To get started, configure an AI provider such as
           <a
             href="https://cloud.siliconflow.cn/i/SG8C0772"
             target="_blank"
             rel="noreferrer"
             className="text-blue-500 mx-1"
           >
-            硅基流动
+            SiliconFlow
           </a>
-          或国外的
+          or
           <a
             href="https://openrouter.ai/"
             target="_blank"
@@ -48,7 +53,7 @@ export function PrerequisitesChecker() {
           >
             OpenRouter
           </a>
-          等 。
+          .
         </div>
 
         <div className="space-y-2 my-4">
@@ -56,7 +61,7 @@ export function PrerequisitesChecker() {
             <label className="block text-sm font-medium text-gray-700">
               API Base URL{' '}
               <span className="text-xs font-normal text-gray-500">
-                (配置硅基流动或其他代理服务商的 API Base URL 地址)
+                (the API endpoint for SiliconFlow or another compatible provider)
               </span>
             </label>
             <input
@@ -76,7 +81,7 @@ export function PrerequisitesChecker() {
                 value={inputApiKey}
                 onChange={(e) => setInputApiKey(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="请输入 API Key"
+                placeholder="Enter your API key"
               />
               <Button
                 variant="ghost"
@@ -91,18 +96,22 @@ export function PrerequisitesChecker() {
         </div>
 
         <div className="flex gap-3">
-          <Button disabled={!inputApiKey.trim()} className="flex-1" onClick={saveApiKey}>
-            开始使用
+          <Button
+            disabled={!inputApiKey.trim()}
+            className="flex-1"
+            onClick={() => void saveApiSettings()}
+          >
+            Get started
           </Button>
           <Button
             variant="outline"
-            onClick={() => {
-              saveApiKey()
+            onClick={async () => {
+              await saveApiSettings()
               navigate('/settings')
             }}
             className="flex-1"
           >
-            更多设置
+            More settings
           </Button>
         </div>
       </div>

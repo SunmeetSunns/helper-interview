@@ -2,6 +2,28 @@ import { streamText, type ModelMessage } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { settings, AppSettings } from './settings'
 
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+
+function getProviderSettings() {
+  const apiKey = settings.apiKey.trim().replace(/^Bearer\s+/i, '')
+  const configuredBaseURL = settings.apiBaseURL.trim().replace(/\/+$/, '')
+  const isOpenRouter =
+    apiKey.startsWith('sk-or-') ||
+    /^https:\/\/(www\.)?openrouter\.ai(?:\/|$)/i.test(configuredBaseURL)
+  const baseURL = isOpenRouter
+    ? configuredBaseURL.replace(/^https:\/\/(www\.)?openrouter\.ai\/?$/i, OPENROUTER_BASE_URL) ||
+      OPENROUTER_BASE_URL
+    : configuredBaseURL || undefined
+
+  return {
+    baseURL,
+    apiKey,
+    // Keep this explicit for OpenAI-compatible gateways such as OpenRouter.
+    // It also prevents a pasted "Bearer ..." prefix from producing a malformed header.
+    headers: { Authorization: `Bearer ${apiKey}` }
+  }
+}
+
 // The system prompt is fully managed by the renderer (prompt scenes in the
 // settings store) and synced here via updateAppSettings on app startup
 function getSystemPrompt(extra?: string) {
@@ -16,10 +38,7 @@ function getModel(_settings: AppSettings) {
 }
 
 export function getSolutionStream(messages: ModelMessage[], abortSignal?: AbortSignal) {
-  const openai = createOpenAI({
-    baseURL: settings.apiBaseURL,
-    apiKey: settings.apiKey
-  })
+  const openai = createOpenAI(getProviderSettings())
 
   const { textStream } = streamText({
     model: openai.chat(getModel(settings)),
@@ -38,10 +57,7 @@ export function getFollowUpStream(
   userQuestion: string,
   abortSignal?: AbortSignal
 ) {
-  const openai = createOpenAI({
-    baseURL: settings.apiBaseURL,
-    apiKey: settings.apiKey
-  })
+  const openai = createOpenAI(getProviderSettings())
 
   // Add the user's follow-up question to the conversation
   const updatedMessages: ModelMessage[] = [
@@ -70,15 +86,12 @@ export function getFollowUpStream(
 }
 
 export function getGeneralStream(messages: ModelMessage[], abortSignal?: AbortSignal) {
-  const openai = createOpenAI({
-    baseURL: settings.apiBaseURL,
-    apiKey: settings.apiKey
-  })
+  const openai = createOpenAI(getProviderSettings())
 
   const { textStream } = streamText({
     model: openai.chat(getModel(settings)),
     system: getSystemPrompt(
-      '注意：如果有多张截图，请结合所有截图内容进行完整分析，不要遗漏任何部分。'
+      'If there are multiple screenshots, analyze all of them together without omitting any part.'
     ),
     messages,
     abortSignal,

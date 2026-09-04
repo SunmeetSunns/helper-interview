@@ -2,9 +2,10 @@
 
 ## Project Overview
 
-**Interview Coder CN** (截屏解题助手) is a desktop application that captures screenshots of on-screen problems (coding challenges, exam questions, or anything else) and uses AI (vision models) to generate solutions in real-time. The window is invisible to screen-sharing software, making it suitable for use during coding interviews and online assessments.
+**Interview Coder CN** (Screenshot Assistant) is a desktop application that captures screenshots of on-screen problems (coding challenges, exam questions, or anything else) and uses AI (vision models) to generate solutions in real-time. The window is invisible to screen-sharing software, making it suitable for use during coding interviews and online assessments.
 
 Key capabilities:
+
 - Global shortcuts trigger screenshot capture → AI analysis → streamed solution display
 - Frameless, transparent, always-on-top overlay window invisible to screen-sharing
 - Mouse passthrough mode (window ignores mouse events)
@@ -15,16 +16,16 @@ Key capabilities:
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Electron 37 (electron-vite 4) |
-| Frontend | React 19, TypeScript 5.8 |
-| Styling | Tailwind CSS v4, shadcn/ui (New York style), Radix primitives |
-| State | Zustand 5 (5 stores, 2 with localStorage persistence) |
-| Routing | react-router v7 (HashRouter, 3 routes) |
-| AI | Vercel AI SDK (`ai` + `@ai-sdk/openai`), streaming via `streamText()` |
-| Build | electron-vite (Vite 7), electron-builder 25 |
-| Linting | ESLint 9 (flat config), Prettier |
+| Layer     | Technology                                                            |
+| --------- | --------------------------------------------------------------------- |
+| Framework | Electron 37 (electron-vite 4)                                         |
+| Frontend  | React 19, TypeScript 5.8                                              |
+| Styling   | Tailwind CSS v4, shadcn/ui (New York style), Radix primitives         |
+| State     | Zustand 5 (5 stores, 2 with localStorage persistence)                 |
+| Routing   | react-router v7 (HashRouter, 3 routes)                                |
+| AI        | Vercel AI SDK (`ai` + `@ai-sdk/openai`), streaming via `streamText()` |
+| Build     | electron-vite (Vite 7), electron-builder 25                           |
+| Linting   | ESLint 9 (flat config), Prettier                                      |
 
 ## Directory Structure
 
@@ -138,6 +139,7 @@ src/
 ### IPC Channels
 
 **Renderer → Main (invoke):**
+
 - `getAppSettings` / `updateAppSettings` — settings CRUD
 - `updateAppState` — sync `inCoderPage`, `ignoreMouse`
 - `initShortcuts` / `getShortcuts` / `updateShortcuts` — shortcut management
@@ -149,6 +151,7 @@ src/
 - `get-transcription-text` / `clear-transcription-text` — read/clear accumulated text
 
 **Main → Renderer (send):**
+
 - `sync-app-state` — push state changes (e.g., mouse ignore toggle)
 - `screenshot-taken` / `screenshots-updated` — screenshot data (`screenshots-updated` also carries the untruncated conversation total)
 - `solution-clear` / `solution-chunk` / `solution-complete` / `solution-stopped` / `solution-error` — AI streaming lifecycle
@@ -160,13 +163,13 @@ src/
 
 ### Zustand Stores
 
-| Store | File | Persisted | Key State |
-|-------|------|-----------|-----------|
-| `useSettingsStore` | `lib/store/settings.ts` | Yes (v8) | `apiBaseURL`, `apiKey`, `model`, `customModels`, `scenes` (prompt scenes), `activeSceneId`, `customPrompt` (derived from active scene), `opacity`, `resizable`, `showOverlayToolbar`, `toolbarHoverDelay`, `screenshotDisplay`, `dashscopeApiKey` |
-| `useShortcutsStore` | `lib/store/shortcuts.ts` | Yes (v5) | `shortcuts` (action → key mapping with categories) |
-| `useSolutionStore` | `lib/store/solution.ts` | No | `isLoading`, `solutionChunks`, `screenshotData`, `errorMessage` |
-| `useTranscriptionStore` | `lib/store/transcription.ts` | No | `isTranscribing`, `transcriptionText`, `errorMessage` |
-| `useAppStore` | `lib/store/app.ts` | No | `ignoreMouse` |
+| Store                   | File                         | Persisted | Key State                                                                                                                                                                                                                                         |
+| ----------------------- | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useSettingsStore`      | `lib/store/settings.ts`      | Yes (v8)  | `apiBaseURL`, `apiKey`, `model`, `customModels`, `scenes` (prompt scenes), `activeSceneId`, `customPrompt` (derived from active scene), `opacity`, `resizable`, `showOverlayToolbar`, `toolbarHoverDelay`, `screenshotDisplay`, `dashscopeApiKey` |
+| `useShortcutsStore`     | `lib/store/shortcuts.ts`     | Yes (v5)  | `shortcuts` (action → key mapping with categories)                                                                                                                                                                                                |
+| `useSolutionStore`      | `lib/store/solution.ts`      | No        | `isLoading`, `solutionChunks`, `screenshotData`, `errorMessage`                                                                                                                                                                                   |
+| `useTranscriptionStore` | `lib/store/transcription.ts` | No        | `isTranscribing`, `transcriptionText`, `errorMessage`                                                                                                                                                                                             |
+| `useAppStore`           | `lib/store/app.ts`           | No        | `ignoreMouse`                                                                                                                                                                                                                                     |
 
 Settings are bidirectionally synced: renderer persists to localStorage, and on mount syncs to main process via `updateAppSettings()`. Main process `.env` values serve as initial defaults only.
 
@@ -177,6 +180,7 @@ Adding a settings key needs no `version` bump: zustand shallow-merges the persis
 ### Window Stealth
 
 The app is designed to be invisible to screen-sharing software:
+
 - `BrowserWindow` options: `transparent: true`, `frame: false`, `skipTaskbar: true`
 - `setContentProtection(true)` prevents screen capture of the window itself
 - `setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true, skipTransformProcessType: true })`
@@ -186,6 +190,7 @@ The app is designed to be invisible to screen-sharing software:
 ### Overlay Toolbar
 
 A second `BrowserWindow` (`src/main/toolbar-window.ts`) that renders the `/toolbar` route, so the shortcut actions can be driven with the mouse instead of the keyboard:
+
 - Owns its own visibility state: the renderer calls `setToolbarVisible()` (main page + `showOverlayToolbar` setting), main additionally requires the main window to be visible. Never call `showInactive()` on it directly — go through `showToolbar()` / `hideToolbar()`.
 - `focusable: false` so clicking a button never pulls focus away from the app underneath
 - Opacity is applied at the window level to match the main window, which applies its own via `document.body.style.opacity`
@@ -197,6 +202,7 @@ A second `BrowserWindow` (`src/main/toolbar-window.ts`) that renders the `/toolb
 ### Window Resizing
 
 Both windows are created with `resizable: false` — toggling Electron's native resizable style breaks transparency on Windows — so resizing is implemented by hand:
+
 - `WindowResizeHandles` renders eight fixed-position edge/corner divs — or, with `axis="x"`, just the two side edges — and sends only `window-resize-start` (pointerdown) and `window-resize-stop`
 - `src/main/window-resize.ts` then polls `screen.getCursorScreenPoint()` and calls `setBounds()`. The cursor is sampled in main because the toolbar is a non-activating panel on macOS and never receives a drag's pointer moves
 - The drag is ended by a `window`-level `pointerup`/`pointercancel`/`blur` listener, with a 30s safety timeout in main as the last resort
@@ -280,7 +286,7 @@ These are read by dotenv in the main process and merged with renderer-side setti
 
 - Prettier: single quotes, no semicolons, 100 char print width, no trailing commas
 - ESLint: TypeScript + React + React Hooks + React Refresh rules
-- UI text and user-facing strings are in **Chinese** (中文)
+- UI text and user-facing strings are in **English**
 - Code comments and variable names are in **English**
 
 ## Important Notes for AI Agents

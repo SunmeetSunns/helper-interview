@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Pointer, PointerOff, OctagonX, MessageCircle } from 'lucide-react'
+import { Pointer, PointerOff, OctagonX, MessageCircle, Trash2 } from 'lucide-react'
 import { useSolutionStore } from '@/lib/store/solution'
 import { useShortcutsStore } from '@/lib/store/shortcuts'
 import { useAppStore } from '@/lib/store/app'
+import { useTranscriptionStore } from '@/lib/store/transcription'
 import ShortcutRenderer from '@/components/ShortcutRenderer'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog'
@@ -16,8 +17,10 @@ export function AppStatusBar() {
     solutionChunks
   } = useSolutionStore()
   const { ignoreMouse } = useAppStore()
+  const { isTranscribing, transcriptionText } = useTranscriptionStore()
   const { shortcuts } = useShortcutsStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false)
   const [questionInput, setQuestionInput] = useState('')
 
   const handleStop = () => {
@@ -52,6 +55,16 @@ export function AppStatusBar() {
 
   // Check if there's an active conversation
   const hasActiveConversation = screenshotData && solutionChunks.length > 0
+  const hasSessionData = Boolean(
+    screenshotData || solutionChunks.length || transcriptionText || isTranscribing
+  )
+
+  const handleClearSession = async () => {
+    await window.api.triggerAction('clearSession')
+    setIsClearDialogOpen(false)
+    setIsDialogOpen(false)
+    setQuestionInput('')
+  }
 
   return (
     <div className="absolute bottom-0 flex items-center justify-between w-full text-blue-100 bg-gray-600/10 px-4 pb-1">
@@ -59,7 +72,7 @@ export function AppStatusBar() {
         {isReceivingSolution ? (
           <div className="flex items-center space-x-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-r-2 border-[currentColor]"></div>
-            <span className="text-sm">正在生成...</span>
+            <span className="text-sm">Generating...</span>
             <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex justify-center z-50 pointer-events-none">
               <Button
                 variant="secondary"
@@ -67,7 +80,7 @@ export function AppStatusBar() {
                 onClick={handleStop}
               >
                 <OctagonX className="w-4 h-4" />
-                停止生成
+                Stop generating
                 <ShortcutRenderer
                   shortcut={shortcuts.stopSolutionStream.key}
                   className="inline-block border bg-transparent py-0 px-1"
@@ -82,19 +95,30 @@ export function AppStatusBar() {
                 shortcut={shortcuts.appendScreenshot.key}
                 className="inline-block scale-75 text-xs border border-current bg-transparent py-0 px-1 ml-1"
               />
-              追加截图
+              Add screenshot
             </span>
             <span>
               <ShortcutRenderer
                 shortcut={shortcuts.takeScreenshot.key}
                 className="inline-block scale-75 text-xs border border-current bg-transparent py-0 px-1"
               />
-              新开对话
+              New conversation
             </span>
           </div>
         ) : null}
       </div>
       <div className="flex items-center space-x-4 select-none">
+        {hasSessionData && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsClearDialogOpen(true)}
+            className="h-7 px-3 text-xs"
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Clear session
+          </Button>
+        )}
         {/* Follow-up Question Button */}
         {hasActiveConversation && !isReceivingSolution && (
           <Button
@@ -105,7 +129,7 @@ export function AppStatusBar() {
             disabled={isReceivingSolution}
           >
             <MessageCircle className="w-4 h-4 mr-1" />
-            追问问题
+            Ask a follow-up
           </Button>
         )}
         {/* Mouse Status Indicator */}
@@ -114,7 +138,7 @@ export function AppStatusBar() {
             <>
               <PointerOff className="w-4 h-4 mr-2" />
               <span className="text-xs">
-                取消鼠标透传
+                Disable mouse passthrough
                 <ShortcutRenderer
                   shortcut={shortcuts.ignoreOrEnableMouse.key}
                   className="inline-block scale-75 text-xs border border-current bg-transparent py-0 px-1"
@@ -129,11 +153,11 @@ export function AppStatusBar() {
 
       {/* Follow-up Question Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTitle className="sr-only">追问问题</DialogTitle>
+        <DialogTitle className="sr-only">Ask a follow-up</DialogTitle>
         <DialogContent>
           <div className="py-4">
             <Textarea
-              placeholder="请输入追问内容，按 Ctrl+Enter 提交..."
+              placeholder="Enter a follow-up question. Press Ctrl+Enter to submit..."
               value={questionInput}
               className="min-h-24"
               onChange={(e) => setQuestionInput(e.target.value)}
@@ -148,10 +172,28 @@ export function AppStatusBar() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleDialogClose}>
-              取消
+              Cancel
             </Button>
             <Button onClick={handleSubmitQuestion} disabled={!questionInput.trim()}>
-              提交
+              Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+        <DialogContent>
+          <DialogTitle>Clear session data?</DialogTitle>
+          <p className="py-4 text-sm text-muted-foreground">
+            This clears the current screenshots, transcript, generated answer, and AI conversation
+            history. Your API keys and settings will be kept.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsClearDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleClearSession}>
+              Clear session
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -142,13 +142,13 @@ export function AppContent() {
             />
           </svg>
           <div className="flex-1 min-w-0">
-            <p className="text-red-400 font-medium text-sm">API 调用失败</p>
+            <p className="text-red-400 font-medium text-sm">API request failed</p>
             <p className="text-red-300/80 text-sm mt-0.5 break-words">{errorMessage}</p>
           </div>
           <button
             onClick={() => setErrorMessage(null)}
             className="text-red-400/80 hover:text-red-300 flex-shrink-0"
-            title="关闭"
+            title="Close"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -196,7 +196,7 @@ function Screenshots({
     return (
       <div className="mb-4 inline-flex items-center gap-1.5 rounded-lg border border-white/30 bg-white/10 px-2.5 py-1 text-sm text-gray-100 select-none">
         <Images className="h-4 w-4" />
-        {total} 张截图
+        {total} {total === 1 ? 'screenshot' : 'screenshots'}
       </div>
     )
   }
@@ -209,7 +209,7 @@ function Screenshots({
           src={`data:image/png;base64,${data}`}
           alt={`Screenshot ${index + 1}`}
           className="w-40 h-auto flex-shrink-0 border border-gray-600 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-          title={`第 ${index + 1} 张截图`}
+          title={`Screenshot ${index + 1}`}
         />
       ))}
     </div>
@@ -220,12 +220,12 @@ function ShortcutTip() {
   const { shortcuts } = useShortcutsStore()
   return (
     <div className="flex items-center justify-center h-full text-xl text-gray-400 select-none">
-      请按下快捷键
+      Press
       <ShortcutRenderer
         shortcut={shortcuts.takeScreenshot.key}
         className="mx-1 font-bold text-black"
       />
-      抓取屏幕进行分析
+      to capture your screen for analysis
     </div>
   )
 }

@@ -57,6 +57,7 @@ const api = {
       | 'moveMainWindowRight'
       | 'toggleTranscription'
       | 'clearTranscription'
+      | 'clearSession'
   ) => ipcRenderer.invoke('triggerAction', action),
   setToolbarVisible: (visible: boolean) => ipcRenderer.invoke('setToolbarVisible', visible),
 

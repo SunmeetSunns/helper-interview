@@ -16,7 +16,7 @@ export function AppHeader() {
   return (
     <div id="app-header" className="flex items-center text-white">
       <div className="mx-auto flex items-baseline gap-1.5">
-        <span>截屏解题助手</span>
+        <span>Screenshot Assistant</span>
         {appVersion && <span className="text-[10px] opacity-60">v{appVersion}</span>}
       </div>
       <div className={`actions ${ignoreMouse ? 'pointer-events-none' : ''}`}>
@@ -24,6 +24,7 @@ export function AppHeader() {
           variant="ghost"
           className="size-8 cursor-pointer hover:opacity-50"
           onClick={() => navigate('/settings')}
+          aria-label="Settings"
         >
           <SettingsIcon />
         </Button>
@@ -31,6 +32,7 @@ export function AppHeader() {
           variant="ghost"
           className="size-8 cursor-pointer hover:opacity-50"
           onClick={() => navigate('/help')}
+          aria-label="Help"
         >
           <HelpCircle />
         </Button>
@@ -38,6 +40,7 @@ export function AppHeader() {
           variant="ghost"
           className="size-8 cursor-pointer hover:opacity-50 hover:text-red-500"
           onClick={() => window.close()}
+          aria-label="Close"
         >
           <X />
         </Button>

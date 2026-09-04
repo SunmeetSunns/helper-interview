@@ -34,19 +34,26 @@ export async function startAudioCapture(): Promise<void> {
 
   let stream: MediaStream
   if (audioInputDeviceId) {
-    try {
-      stream = await openMicrophoneStream(audioInputDeviceId)
-    } catch (err) {
-      console.warn('Failed to open selected microphone, falling back to system audio:', err)
-      stream = await openSystemAudioStream()
-    }
+    // Do not silently switch to system audio if the selected microphone fails.
+    // That makes the UI appear active while the user's voice is not being captured.
+    stream = await openMicrophoneStream(audioInputDeviceId)
   } else {
     stream = await openSystemAudioStream()
   }
 
+  const audioTracks = stream.getAudioTracks()
+  if (audioTracks.length === 0) {
+    stream.getTracks().forEach((track) => track.stop())
+    throw new Error('The selected audio source did not provide an audio track')
+  }
+
   mediaStream = stream
 
+  // AssemblyAI streaming accepts 16 kHz mono PCM16 audio.
   audioContext = new AudioContext({ sampleRate: 16000 })
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume()
+  }
 
   if (audioOutputDeviceId && 'setSinkId' in audioContext) {
     try {
@@ -58,7 +65,7 @@ export async function startAudioCapture(): Promise<void> {
     }
   }
 
-  const source = audioContext.createMediaStreamSource(new MediaStream(stream.getAudioTracks()))
+  const source = audioContext.createMediaStreamSource(new MediaStream(audioTracks))
 
   processor = audioContext.createScriptProcessor(2048, 1, 1)
   processor.onaudioprocess = (e) => {

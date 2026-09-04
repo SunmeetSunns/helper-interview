@@ -62,7 +62,7 @@ export default function SettingsPage() {
     activeSceneId,
     screenshotAutoSave,
     screenshotDir,
-    dashscopeApiKey,
+    assemblyaiApiKey,
     audioInputDeviceId,
     audioOutputDeviceId,
     hideDockIcon,
@@ -73,7 +73,7 @@ export default function SettingsPage() {
     removeScene
   } = useSettingsStore()
   const [showApiKey, setShowApiKey] = useState(false)
-  const [showDashscopeApiKey, setShowDashscopeApiKey] = useState(false)
+  const [showAssemblyAIKey, setShowAssemblyAIKey] = useState(false)
   const [addSceneOpen, setAddSceneOpen] = useState(false)
   const [newSceneName, setNewSceneName] = useState('')
   const [sceneToDelete, setSceneToDelete] = useState<string | null>(null)
@@ -130,7 +130,7 @@ export default function SettingsPage() {
             </Link>
           </Button>
         </div>
-        <h1>设置</h1>
+        <h1>Settings</h1>
       </div>
 
       {/* Settings Content */}
@@ -139,7 +139,7 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Bot className="h-5 w-5 mr-2" />
-            AI 设置
+            AI Settings
           </h2>
 
           <div className="space-y-4">
@@ -147,7 +147,7 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">
                 API Base URL
                 <span className="ml-2 text-xs font-light">
-                  如硅基流动为 https://api.siliconflow.cn/v1
+                  For example, OpenRouter: https://openrouter.ai/api/v1
                 </span>
               </label>
               <input
@@ -155,7 +155,7 @@ export default function SettingsPage() {
                 value={apiBaseURL}
                 onChange={(e) => updateSetting('apiBaseURL', e.target.value)}
                 className="w-60 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="可为空，默认使用 OpenAI 的 API"
+                placeholder="Optional; defaults to the OpenAI API"
               />
             </div>
 
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                   value={apiKey}
                   onChange={(e) => updateSetting('apiKey', e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="输入 API Key"
+                  placeholder="Enter API key"
                 />
                 <Button
                   variant="ghost"
@@ -184,7 +184,7 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">
                 Model
                 <span className="ml-2 text-xs font-light">
-                  这里列了几个流行的国内和国外模型，请自行确认你的平台是否支持
+                  Confirm that your selected provider supports the model
                 </span>
               </label>
               <SelectModel value={model} onChange={(val) => updateSetting('model', val)} />
@@ -195,53 +195,42 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Mic className="h-5 w-5 mr-2" />
-            语音转录
+            Speech Transcription
           </h2>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                百炼平台 API Key
+                AssemblyAI API Key
                 <span className="ml-2 text-xs font-light">
-                  从阿里云
-                  <a
-                    href="https://bailian.console.aliyun.com/cn-beijing?tab=model#/api-key"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-0.5 text-blue-700 hover:underline"
-                  >
-                    百炼平台
-                  </a>
-                  获取，如不需要语音转录功能可跳过
+                  Used only for live speech transcription
                 </span>
               </label>
               <div className="flex items-center w-60">
                 <input
-                  type={showDashscopeApiKey ? 'text' : 'password'}
-                  value={dashscopeApiKey}
-                  onChange={(e) => updateSetting('dashscopeApiKey', e.target.value)}
+                  type={showAssemblyAIKey ? 'text' : 'password'}
+                  value={assemblyaiApiKey}
+                  onChange={(e) => updateSetting('assemblyaiApiKey', e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="输入百炼平台 API Key"
+                  placeholder="Enter AssemblyAI API key"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowDashscopeApiKey(!showDashscopeApiKey)}
+                  onClick={() => setShowAssemblyAIKey(!showAssemblyAIKey)}
                   className="border border-l-0 rounded-l-none rounded-r-md h-9 w-9 hover:border-none"
                 >
-                  {showDashscopeApiKey ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
+                  {showAssemblyAIKey ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                音频输入设备
-                <span className="ml-2 text-xs font-light">选择麦克风，留空则捕获系统音频</span>
+                Audio input device
+                <span className="ml-2 text-xs font-light">
+                  System audio captures speaker output, not your microphone
+                </span>
               </label>
               <Select
                 value={audioInputDeviceId || 'system'}
@@ -250,10 +239,10 @@ export default function SettingsPage() {
                 }
               >
                 <SelectTrigger className="w-60 bg-white">
-                  <SelectValue placeholder="系统音频（默认）" />
+                  <SelectValue placeholder="System audio (default)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="system">系统音频（默认）</SelectItem>
+                  <SelectItem value="system">System audio (default)</SelectItem>
                   {audioDevices
                     .filter((d) => d.kind === 'audioinput')
                     .map((d) => (
@@ -267,8 +256,8 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                音频输出设备
-                <span className="ml-2 text-xs font-light">用于转录时的监听输出</span>
+                Audio output device
+                <span className="ml-2 text-xs font-light">Monitoring output for transcription</span>
               </label>
               <Select
                 value={audioOutputDeviceId || 'default'}
@@ -277,10 +266,10 @@ export default function SettingsPage() {
                 }
               >
                 <SelectTrigger className="w-60 bg-white">
-                  <SelectValue placeholder="默认设备" />
+                  <SelectValue placeholder="Default device" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="default">默认设备</SelectItem>
+                  <SelectItem value="default">Default device</SelectItem>
                   {audioDevices
                     .filter((d) => d.kind === 'audiooutput')
                     .map((d) => (
@@ -296,15 +285,15 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <SquareTerminal className="h-5 w-5 mr-2" />
-            解题设置
+            Solution Settings
           </h2>
 
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">
-                使用场景
+                Scene
                 <span className="ml-2 text-xs font-light">
-                  选择场景后可编辑对应的系统提示词，修改会自动保存；也可新增自己的场景
+                  Select a scene to edit its system prompt, or create your own
                 </span>
               </label>
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -325,7 +314,7 @@ export default function SettingsPage() {
                     {!scene.isPreset && (
                       <button
                         className="mr-1.5 p-0.5 rounded-full opacity-60 hover:opacity-100 hover:bg-black/10"
-                        title="删除该场景"
+                        title="Delete this scene"
                         onClick={(e) => {
                           e.stopPropagation()
                           setSceneToDelete(scene.id)
@@ -341,7 +330,7 @@ export default function SettingsPage() {
                   onClick={() => setAddSceneOpen(true)}
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  新增场景
+                  Add scene
                 </button>
               </div>
             </div>
@@ -350,24 +339,24 @@ export default function SettingsPage() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-sm font-medium">
-                    系统提示词
-                    <span className="ml-2 text-xs font-light">「{activeScene.name}」场景</span>
+                    System prompt
+                    <span className="ml-2 text-xs font-light">{activeScene.name} scene</span>
                   </label>
                   {activeScene.isPreset && (
                     <button
                       className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900 transition-colors"
-                      title="恢复该场景的默认提示词"
+                      title="Restore the default prompt for this scene"
                       onClick={handleResetScenePrompt}
                     >
                       <RotateCcw className="h-3 w-3" />
-                      恢复默认
+                      Restore default
                     </button>
                   )}
                 </div>
                 <Textarea
                   value={activeScene.prompt}
                   onChange={(e) => updateScenePrompt(activeScene.id, e.target.value)}
-                  placeholder="请输入该场景的系统提示词, 示例: 你是一个解题助手, 请根据「截图」和「语音转录内容」给出相关回答。"
+                  placeholder="Enter the system prompt for this scene. Example: Answer the question using the screenshot and transcript."
                   className="w-full min-h-24 max-h-100 bg-white"
                   rows={6}
                 />
@@ -380,13 +369,13 @@ export default function SettingsPage() {
         <Dialog open={addSceneOpen} onOpenChange={setAddSceneOpen}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>新增场景</DialogTitle>
-              <DialogDescription>创建后可为该场景编写专属的系统提示词</DialogDescription>
+              <DialogTitle>Add Scene</DialogTitle>
+              <DialogDescription>Create a scene with its own system prompt</DialogDescription>
             </DialogHeader>
             <Input
               value={newSceneName}
               onChange={(e) => setNewSceneName(e.target.value)}
-              placeholder="场景名称，如：数学考试"
+              placeholder="Scene name, for example: Math Exam"
               maxLength={20}
               autoFocus
               onKeyDown={(e) => {
@@ -395,10 +384,10 @@ export default function SettingsPage() {
             />
             <DialogFooter>
               <Button variant="outline" onClick={() => setAddSceneOpen(false)}>
-                取消
+                Cancel
               </Button>
               <Button onClick={handleAddScene} disabled={!newSceneName.trim()}>
-                创建
+                Create
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -408,14 +397,14 @@ export default function SettingsPage() {
         <Dialog open={!!sceneToDelete} onOpenChange={(open) => !open && setSceneToDelete(null)}>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>删除场景</DialogTitle>
+              <DialogTitle>Delete Scene</DialogTitle>
               <DialogDescription>
-                确定删除场景「{deletingScene?.name}」吗？其提示词内容将一并删除，且无法恢复。
+                Delete the “{deletingScene?.name}” scene and its prompt? This cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setSceneToDelete(null)}>
-                取消
+                Cancel
               </Button>
               <Button
                 variant="destructive"
@@ -424,7 +413,7 @@ export default function SettingsPage() {
                   setSceneToDelete(null)
                 }}
               >
-                删除
+                Delete
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -434,19 +423,19 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Palette className="h-5 w-5 mr-2" />
-            界面设置
+            Appearance Settings
           </h2>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                窗口透明度
+                Window opacity
                 <span className="ml-2 text-xs font-light">
-                  拖动可实时预览效果，也可在主界面用快捷键调节
+                  Drag to preview, or adjust it with shortcuts on the main screen
                 </span>
               </label>
               <div className="w-60 flex items-center gap-2">
-                <span className="text-xs whitespace-nowrap">透明</span>
+                <span className="text-xs whitespace-nowrap">Transparent</span>
                 <Slider
                   min={OPACITY_MIN}
                   max={OPACITY_MAX}
@@ -457,15 +446,15 @@ export default function SettingsPage() {
                     document.body.style.opacity = value[0].toString()
                   }}
                 />
-                <span className="text-xs whitespace-nowrap">不透明</span>
+                <span className="text-xs whitespace-nowrap">Opaque</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                允许调整主窗口大小
+                Allow main window resizing
                 <span className="ml-2 text-xs font-light">
-                  关闭后鼠标移到窗口边缘不再出现缩放光标
+                  When disabled, window edges no longer show resize cursors
                 </span>
               </label>
               <Switch
@@ -477,9 +466,9 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                截图展示方式
+                Screenshot display
                 <span className="ml-2 text-xs font-light">
-                  主界面上截图占多大位置；无论选哪种，截图都会正常发送给 AI
+                  Controls screenshot previews; screenshots are always sent to the AI
                 </span>
               </label>
               <Select
@@ -492,18 +481,18 @@ export default function SettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">不展示</SelectItem>
-                  <SelectItem value="count">卡片显示截图数量</SelectItem>
-                  <SelectItem value="gallery">显示全部缩略图（默认）</SelectItem>
+                  <SelectItem value="none">Do not show</SelectItem>
+                  <SelectItem value="count">Show screenshot count</SelectItem>
+                  <SelectItem value="gallery">Show all thumbnails (default)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                悬浮工具条
+                Overlay toolbar
                 <span className="ml-2 text-xs font-light">
-                  在主窗口上方显示一排按钮，可用鼠标点击替代快捷键操作，详见帮助中心
+                  Shows clickable action buttons above the main window; see Help for details
                 </span>
               </label>
               <Switch
@@ -516,9 +505,9 @@ export default function SettingsPage() {
             {showOverlayToolbar && (
               <div className="flex items-center justify-between pl-4 border-l-2 border-gray-400/70">
                 <label className="text-sm font-medium">
-                  悬停触发
+                  Hover activation
                   <span className="ml-2 text-xs font-light">
-                    鼠标在按钮上停留指定时间即触发，无需点击；停留过程中按钮下方有进度条
+                    Triggers an action after hovering; a progress bar shows the remaining time
                   </span>
                 </label>
                 <Select
@@ -529,10 +518,10 @@ export default function SettingsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">关闭（仅点击触发）</SelectItem>
-                    <SelectItem value="500">停留 0.5 秒</SelectItem>
-                    <SelectItem value="1000">停留 1 秒</SelectItem>
-                    <SelectItem value="2000">停留 2 秒</SelectItem>
+                    <SelectItem value="0">Off (click only)</SelectItem>
+                    <SelectItem value="500">Hover for 0.5 seconds</SelectItem>
+                    <SelectItem value="1000">Hover for 1 second</SelectItem>
+                    <SelectItem value="2000">Hover for 2 seconds</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -544,9 +533,9 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Keyboard className="h-5 w-5 mr-2" />
-            快捷键设置
+            Shortcut Settings
             <div className="text-sm font-light ml-2 mt-1">
-              只有在主界面时，快捷键才有效。当前页面仅部分快捷键生效。
+              Most shortcuts only work on the main screen.
             </div>
             <ResetDefaultShortcuts />
           </h2>
@@ -557,15 +546,15 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <FolderOpen className="h-5 w-5 mr-2" />
-            保存截图
+            Save Screenshots
           </h2>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                保存截图到本地
+                Save screenshots locally
                 <span className="ml-2 text-xs font-light">
-                  开启后，每次截图都会自动保存到指定目录
+                  Automatically saves every screenshot to the selected folder
                 </span>
               </label>
               <Switch
@@ -577,20 +566,20 @@ export default function SettingsPage() {
             {screenshotAutoSave && (
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
-                  保存目录
+                  Save folder
                   <span className="ml-2 text-xs font-light">
-                    可点击右侧内容重新选择保存目录（选择弹窗可能被本窗口遮挡）
+                    Click the path to choose another folder
                   </span>
                 </label>
                 <button
                   className="text-xs text-gray-600 max-w-48 truncate hover:text-gray-900 cursor-pointer transition-colors"
-                  title="点击选择保存目录"
+                  title="Choose screenshot folder"
                   onClick={async () => {
                     const dir = await window.api.selectScreenshotDir()
                     if (dir) updateSetting('screenshotDir', dir)
                   }}
                 >
-                  {screenshotDir || '默认: 图片/InterviewCoder'}
+                  {screenshotDir || 'Default: Pictures/InterviewCoder'}
                 </button>
               </div>
             )}
@@ -601,20 +590,21 @@ export default function SettingsPage() {
         <div className="bg-gray-300/80 rounded-lg p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center">
             <Shield className="h-5 w-5 mr-2" />
-            隐私设置
+            Privacy Settings
           </h2>
 
           <div className="space-y-4">
             <p className="text-sm">
-              此应用为本地应用，采集的图片直接上传到您配置的 OpenAI
-              等大模型公司，不存在隐私泄露风险。
+              This app runs locally. Captured images are sent directly to the AI provider you
+              configure. Review that provider&apos;s privacy policy before sending sensitive
+              content.
             </p>
             {isMac && (
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
-                  隐藏 Dock 图标
+                  Hide Dock icon
                   <span className="ml-2 text-xs font-light">
-                    开启后不在程序坞和 Cmd+Tab 切换器中显示，仅可通过快捷键唤起窗口
+                    Hides the app from the Dock and Cmd+Tab; use the shortcut to show it again
                   </span>
                 </label>
                 <Switch

@@ -25,25 +25,25 @@ export const PRESET_SCENE_PROMPTS: Record<string, string> = {
 const createPresetScenes = (): PromptScene[] => [
   {
     id: CODING_SCENE_ID,
-    name: '解算法题',
+    name: 'Coding Problem',
     prompt: PRESET_SCENE_PROMPTS[CODING_SCENE_ID],
     isPreset: true
   },
   {
     id: 'english-exam',
-    name: '英语考试',
+    name: 'English Exam',
     prompt: PRESET_SCENE_PROMPTS['english-exam'],
     isPreset: true
   },
   {
     id: 'aptitude-test',
-    name: '能力测评',
+    name: 'Aptitude Test',
     prompt: PRESET_SCENE_PROMPTS['aptitude-test'],
     isPreset: true
   },
   {
     id: 'general-qa',
-    name: '通用问答',
+    name: 'General Q&A',
     prompt: PRESET_SCENE_PROMPTS['general-qa'],
     isPreset: true
   }
@@ -88,7 +88,7 @@ interface Settings {
   screenshotAutoSave: boolean
   screenshotDir: string
 
-  dashscopeApiKey: string
+  assemblyaiApiKey: string
 
   hideDockIcon: boolean
 
@@ -125,7 +125,7 @@ const defaultSettings: Settings = {
   screenshotAutoSave: false,
   screenshotDir: '',
 
-  dashscopeApiKey: '',
+  assemblyaiApiKey: '',
 
   hideDockIcon: false,
 
@@ -192,11 +192,21 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'interview-coder-settings',
-      version: 8,
+      version: 10,
       migrate: (persisted, version) => {
         const state = persisted as Partial<Settings>
         // Drop the legacy codeLanguage field (language now lives in the prompt text)
         delete (state as Record<string, unknown>).codeLanguage
+        // Remove the retired provider key so it is not retained in local storage.
+        delete (state as Record<string, unknown>).dashscopeApiKey
+        if (version < 9) {
+          // Replace the former Chinese preset names and prompts with the English defaults.
+          // Custom scenes remain untouched because their content belongs to the user.
+          const customScenes = Array.isArray(state.scenes)
+            ? state.scenes.filter((scene) => !scene.isPreset)
+            : []
+          state.scenes = [...createPresetScenes(), ...customScenes]
+        }
         if (version < 8) {
           // Hover-delay options are now 0.5s / 1s / 2s; snap the retired ones
           // so the Select still matches an item
@@ -211,7 +221,7 @@ export const useSettingsStore = create<SettingsStore>()(
           const legacyPrompt = (state.customPrompt ?? '').trim()
           if (legacyPrompt) {
             const id = `custom-${Date.now()}`
-            scenes.push({ id, name: '自定义场景', prompt: legacyPrompt, isPreset: false })
+            scenes.push({ id, name: 'Custom Scene', prompt: legacyPrompt, isPreset: false })
             activeSceneId = id
           }
           return { ...state, scenes, activeSceneId }

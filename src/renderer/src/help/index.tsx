@@ -35,16 +35,20 @@ export default function HelpPage() {
             </Link>
           </Button>
         </div>
-        <h1>帮助中心</h1>
+        <h1>Help Center</h1>
       </div>
 
       {/* Help Content */}
       <div id="app-content" className="flex flex-col gap-4 p-8">
         {/* Introduction */}
-        <HelpSection Icon={Info} title="简介" description={appVersion && `当前版本 v${appVersion}`}>
+        <HelpSection
+          Icon={Info}
+          title="Introduction"
+          description={appVersion && `Version ${appVersion}`}
+        >
           <p className="text-gray-700">
-            欢迎使用截屏解题助手！无论是 编程面试 / 在线考试 还是其他解题场景，
-            该工具都可以帮助您快速截图，分析屏幕内容，并给出解答建议。 您可以访问本项目{' '}
+            Welcome to Screenshot Assistant. It captures your screen, analyzes its contents, and
+            suggests answers for coding problems, exams, and other question types. Visit the{' '}
             <a
               href="https://github.com/ooboqoo/interview-coder-cn/wiki"
               target="_blank"
@@ -53,25 +57,26 @@ export default function HelpPage() {
             >
               GitHub Wiki
             </a>{' '}
-            获取更多帮助信息（如隐身相关配置、API Key 申请等）。
+            for setup help, screen-capture protection, and API key instructions.
           </p>
           <div className="bg-gray-700/10 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">主要功能：</h3>
+            <h3 className="font-semibold mb-2">Main features:</h3>
             <ul className="space-y-1 text-gray-700 list-disc list-inside">
               <li className="flex gap-2">
                 <Camera className="h-6 w-4" />
-                <span>通过快捷键快速截图，并生成解题建议。</span>
+                <span>Capture screenshots with shortcuts and generate suggested solutions.</span>
               </li>
               <li className="flex gap-2">
                 <EyeOff className="h-6 w-4" />
                 <span>
-                  工具窗口在共享屏幕时自动隐藏(对方不可见)(小部分会议软件可能需要配置才能隐藏)。
+                  Protect the app window from screen capture. Some meeting apps may need additional
+                  configuration.
                 </span>
               </li>
               <li className="flex items-start gap-2">
                 <PictureInPicture2 className="h-6 w-4" />
                 <span>
-                  工具窗口置顶半透明显示，您在做题时光标始终停留在做题区域，不会导致原页面失焦。
+                  Keep a translucent window on top without taking focus from the page underneath.
                 </span>
               </li>
             </ul>
@@ -79,19 +84,19 @@ export default function HelpPage() {
         </HelpSection>
 
         {/* Quick Start */}
-        <HelpSection Icon={Lightbulb} title="快速开始">
+        <HelpSection Icon={Lightbulb} title="Quick Start">
           <div className="border border-gray-400 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">1. 截取屏幕截图</h3>
+            <h3 className="font-semibold mb-2">1. Capture the screen</h3>
             <p className="text-sm text-gray-700">
-              当您需要分析某个问题时，按下快捷键{' '}
+              When you want to analyze a question, press{' '}
               <ShortcutRenderer shortcut={`${platformAlt}+Enter`} className="text-xs mx-1" />
-              截取当前屏幕。截图会立即显示在应用中。
+              to capture the current screen. The screenshot appears immediately.
             </p>
           </div>
           <div className="border border-gray-400 rounded-lg p-4">
-            <h3 className="font-semibold mb-2">2. 查看结果</h3>
+            <h3 className="font-semibold mb-2">2. Review the result</h3>
             <p className="text-sm text-gray-700">
-              截图完成后，系统会根据当前选择的提示词场景自动分析内容，给出解题思路和答案。
+              The selected scene prompt analyzes the screenshot and generates an answer.
             </p>
           </div>
         </HelpSection>
@@ -106,13 +111,13 @@ export default function HelpPage() {
         <FAQ />
 
         {/* Contact Support */}
-        <HelpSection Icon={MessageCircle} title="联系支持">
-          <p className="text-gray-700">如果您遇到问题或有建议，请通过以下方式联系我们：</p>
+        <HelpSection Icon={MessageCircle} title="Support">
+          <p className="text-gray-700">For problems or suggestions, contact us here:</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="border border-gray-400 rounded-lg p-4">
               <h3 className="font-semibold mb-2 ">GitHub Issues</h3>
               <p className="text-gray-700">
-                在{' '}
+                Submit bug reports and feature requests through{' '}
                 <a
                   href="https://github.com/ooboqoo/interview-coder-cn/issues"
                   target="_blank"
@@ -121,7 +126,7 @@ export default function HelpPage() {
                 >
                   GitHub Issues
                 </a>{' '}
-                上提交问题报告和功能请求
+                .
               </p>
             </div>
           </div>

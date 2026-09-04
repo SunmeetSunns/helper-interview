@@ -35,7 +35,7 @@ export function applyDockVisibility(hidden: boolean): void {
 ipcMain.handle('selectScreenshotDir', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory', 'createDirectory'],
-    title: '选择截图保存目录'
+    title: 'Choose screenshot folder'
   })
   if (result.canceled || result.filePaths.length === 0) {
     return null
@@ -58,7 +58,7 @@ export const settings = {
   toolbarHoverDelay: 0,
   screenshotAutoSave: false,
   screenshotDir: '',
-  dashscopeApiKey: '',
+  assemblyaiApiKey: process.env.ASSEMBLYAI_API_KEY || '',
   hideDockIcon: false,
   audioInputDeviceId: '',
   audioOutputDeviceId: ''

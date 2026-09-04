@@ -16,7 +16,7 @@ const ShortcutsContext = createContext<{
 
 export function CustomShortcuts() {
   const { shortcuts, updateShortcut } = useShortcutsStore()
-  const { dashscopeApiKey } = useSettingsStore()
+  const { assemblyaiApiKey } = useSettingsStore()
   const [recordingAction, setRecordingAction] = useState<string | null>(null)
 
   const onShortcutChange = useCallback(
@@ -59,71 +59,76 @@ export function CustomShortcuts() {
       <div className="space-y-4">
         {/* Window Management */}
         <div className="space-y-2">
-          <h3 className="text-sm text-gray-500">窗口管理</h3>
-          <Shortcut label="隐藏/显示窗口" shortcut="hideOrShowMainWindow" />
+          <h3 className="text-sm text-gray-500">Window Management</h3>
+          <Shortcut label="Hide/show window" shortcut="hideOrShowMainWindow" />
           <Shortcut
-            label="鼠标穿透"
-            description="启用后窗口对鼠标穿透，可以点击窗口背后的内容"
+            label="Mouse passthrough"
+            description="Lets mouse input pass through to content behind the window"
             shortcut="ignoreOrEnableMouse"
           />
           <Shortcut
-            label="提高不透明度"
-            description="每次调整 5%，窗口更清晰"
+            label="Increase opacity"
+            description="Makes the window 5% more visible"
             shortcut="increaseOpacity"
           />
           <Shortcut
-            label="提高透明度"
-            description="每次调整 5%，窗口更透明"
+            label="Decrease opacity"
+            description="Makes the window 5% more transparent"
             shortcut="decreaseOpacity"
           />
         </div>
 
         {/* Screenshot & AI */}
         <div className="space-y-2">
-          <h3 className="text-sm text-gray-500">截图与AI</h3>
+          <h3 className="text-sm text-gray-500">Screenshot &amp; AI</h3>
           <Shortcut
-            label="截图"
-            description="截图并生成解题建议（会新开对话）"
+            label="Take screenshot"
+            description="Captures the screen and starts a new solution conversation"
             shortcut="takeScreenshot"
           />
           <Shortcut
-            label="追加截图"
-            description="在当前对话中追加截图并生成解题建议，适用于长题目等场景"
+            label="Add screenshot"
+            description="Adds another screenshot to the current conversation"
             shortcut="appendScreenshot"
           />
           <Shortcut
-            label="停止生成"
-            description="打断当前正在生成的解题建议"
+            label="Stop generating"
+            description="Stops the solution currently being generated"
             shortcut="stopSolutionStream"
           />
           <Shortcut
-            label="语音转录"
-            description="开始/暂停实时语音转录"
+            label="Speech transcription"
+            description="Starts or pauses real-time transcription"
             shortcut="toggleTranscription"
-            disabled={!dashscopeApiKey}
+            disabled={!assemblyaiApiKey}
           />
           <Shortcut
-            label="清除转录文本"
-            description="清除已转录的文本（不会提交给AI）"
+            label="Clear transcript"
+            description="Clears transcribed text without submitting it to AI"
             shortcut="clearTranscription"
-            disabled={!dashscopeApiKey}
+            disabled={!assemblyaiApiKey}
+          />
+          <Shortcut
+            label="Clear session"
+            description="Clears screenshots, transcript, generated output, and conversation history"
+            shortcut="clearSession"
           />
         </div>
 
         {/* Navigation */}
         <div className="space-y-2">
-          <h3 className="text-sm text-gray-500">页面导航</h3>
-          <Shortcut label="向上翻页" shortcut="pageUp" />
-          <Shortcut label="向下翻页" shortcut="pageDown" />
+          <h3 className="text-sm text-gray-500">Navigation</h3>
+          <Shortcut label="Page up" shortcut="pageUp" />
+          <Shortcut label="Page down" shortcut="pageDown" />
         </div>
 
         {/* Window Movement */}
         <div className="space-y-2">
-          <h3 className="text-sm text-gray-500">窗口移动</h3>
-          <Shortcut label="向上移动窗口" shortcut="moveMainWindowUp" />
-          <Shortcut label="向下移动窗口" shortcut="moveMainWindowDown" />
-          <Shortcut label="向左移动窗口" shortcut="moveMainWindowLeft" />
-          <Shortcut label="向右移动窗口" shortcut="moveMainWindowRight" />
+          <h3 className="text-sm text-gray-500">Window Movement</h3>
+          <Shortcut label="Move window up" shortcut="moveMainWindowUp" />
+          <Shortcut label="Move window down" shortcut="moveMainWindowDown" />
+          <Shortcut label="Move window left" shortcut="moveMainWindowLeft" />
+          <Shortcut label="Move window right" shortcut="moveMainWindowRight" />
         </div>
       </div>
     </ShortcutsContext.Provider>
@@ -162,7 +167,7 @@ function Shortcut({
           <ShortcutRenderer shortcut={shortcut.key} />
         ) : (
           <span className="font-mono text-sm align-middle rounded-md pl-2 pr-1 py-1 transition-colors bg-gray-200 animate-pulse">
-            请按下自定义快捷键...
+            Press your new shortcut...
           </span>
         )}
       </span>
@@ -187,10 +192,10 @@ export function ResetDefaultShortcuts() {
             }))
         )
         resetShortcuts()
-        toast.success('重置默认快捷键成功')
+        toast.success('Default shortcuts restored')
       }}
     >
-      重置默认快捷键
+      Restore default shortcuts
     </Button>
   )
 }

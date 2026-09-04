@@ -32,17 +32,17 @@ export type ToolbarAction = {
  * the toolbar, leaving no way to click the window back.
  */
 export const TOOLBAR_ACTIONS: ToolbarAction[] = [
-  { action: 'takeScreenshot', Icon: Camera, label: '截图解题（新开对话）' },
-  { action: 'appendScreenshot', Icon: ImagePlus, label: '追加截图' },
-  { action: 'stopSolutionStream', Icon: CircleStop, label: '停止生成' },
-  { action: 'ignoreOrEnableMouse', Icon: MousePointer2, label: '切换鼠标穿透' },
-  { action: 'pageUp', Icon: ChevronUp, label: '向上翻页' },
-  { action: 'pageDown', Icon: ChevronDown, label: '向下翻页' },
-  { action: 'moveMainWindowUp', Icon: ArrowUp, label: '向上移动窗口' },
-  { action: 'moveMainWindowLeft', Icon: ArrowLeft, label: '向左移动窗口' },
-  { action: 'moveMainWindowDown', Icon: ArrowDown, label: '向下移动窗口' },
-  { action: 'moveMainWindowRight', Icon: ArrowRight, label: '向右移动窗口' },
-  { action: 'increaseOpacity', Icon: Sun, label: '提高不透明度（更清晰）' },
-  { action: 'decreaseOpacity', Icon: SunDim, label: '提高透明度（更透明）' },
-  { action: 'toggleTranscription', Icon: Mic, label: '开始/暂停语音转录' }
+  { action: 'takeScreenshot', Icon: Camera, label: 'Solve screenshot (new conversation)' },
+  { action: 'appendScreenshot', Icon: ImagePlus, label: 'Add screenshot' },
+  { action: 'stopSolutionStream', Icon: CircleStop, label: 'Stop generating' },
+  { action: 'ignoreOrEnableMouse', Icon: MousePointer2, label: 'Toggle mouse passthrough' },
+  { action: 'pageUp', Icon: ChevronUp, label: 'Page up' },
+  { action: 'pageDown', Icon: ChevronDown, label: 'Page down' },
+  { action: 'moveMainWindowUp', Icon: ArrowUp, label: 'Move window up' },
+  { action: 'moveMainWindowLeft', Icon: ArrowLeft, label: 'Move window left' },
+  { action: 'moveMainWindowDown', Icon: ArrowDown, label: 'Move window down' },
+  { action: 'moveMainWindowRight', Icon: ArrowRight, label: 'Move window right' },
+  { action: 'increaseOpacity', Icon: Sun, label: 'Increase opacity' },
+  { action: 'decreaseOpacity', Icon: SunDim, label: 'Decrease opacity' },
+  { action: 'toggleTranscription', Icon: Mic, label: 'Start or pause transcription' }
 ]

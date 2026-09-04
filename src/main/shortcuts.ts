@@ -13,14 +13,18 @@ import { saveScreenshotToDisk } from './save-screenshot'
 import { getSolutionStream, getFollowUpStream, getGeneralStream } from './ai'
 import { state } from './state'
 import { settings } from './settings'
-import { getTranscriptionText, clearTranscriptionText } from './transcription'
+import {
+  getTranscriptionText,
+  clearTranscriptionText,
+  resetTranscriptionSession
+} from './transcription'
 
 /**
  * Extract meaningful error message from API errors
  */
 function extractErrorMessage(error: unknown): string {
   if (!(error instanceof Error)) {
-    return String(error) || '未知错误'
+    return String(error) || 'Unknown error'
   }
 
   // Try to extract responseBody from AI SDK errors
@@ -49,7 +53,7 @@ function extractErrorMessage(error: unknown): string {
   }
 
   // Fallback to error message
-  return error.message || '未知错误'
+  return error.message || 'Unknown error'
 }
 
 type Shortcut = {
@@ -82,10 +86,12 @@ let currentStreamContext: StreamContext | null = null
 
 // Conversation history tracking
 let conversationMessages: ModelMessage[] = []
-let recentScreenshots: string[] = [] // 最近截图，水平预览 (限5张)
+let recentScreenshots: string[] = [] // Recent screenshots for horizontal preview (up to 5)
 /** Every screenshot in the current conversation, including the ones dropped from the preview */
 let screenshotCount = 0
 let hasAppendSeparator = false
+/** Invalidates screenshot captures that were still pending when the session was cleared. */
+let sessionGeneration = 0
 
 const FRONT_REASSERT_DURATION = 8000
 const FRONT_REASSERT_INTERVAL = 100
@@ -267,7 +273,7 @@ const callbacks: Record<string, () => void> = {
       stopBackgroundGuard()
       mainWindow.hide()
     } else {
-      // 重新显示时不断重申置顶属性，抵消其他前台软件持续抢占
+      // Reassert top-most status after showing to counter foreground apps that keep taking it
       showMainWindow(mainWindow)
     }
   },
@@ -277,8 +283,10 @@ const callbacks: Record<string, () => void> = {
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage || !settings.apiKey) return
 
     abortCurrentStream('new-request')
+    const requestSessionGeneration = sessionGeneration
     let loadingStarted = false
     const screenshotData = await takeScreenshot()
+    if (requestSessionGeneration !== sessionGeneration) return
     if (screenshotData && mainWindow && !mainWindow.isDestroyed()) {
       saveScreenshotToDisk(screenshotData)
       const transcriptionText = getTranscriptionText()
@@ -293,8 +301,8 @@ const callbacks: Record<string, () => void> = {
             {
               type: 'text',
               text: transcriptionText
-                ? `这是语音转录内容：\n${transcriptionText}\n\n同时附上屏幕截图：`
-                : '这是屏幕截图'
+                ? `Speech transcript:\n${transcriptionText}\n\nThe screen capture is attached:`
+                : 'This is a screen capture.'
             },
             {
               type: 'image',
@@ -395,9 +403,11 @@ const callbacks: Record<string, () => void> = {
     }
 
     abortCurrentStream('new-request')
+    const requestSessionGeneration = sessionGeneration
     let loadingStarted = false
 
     const screenshotData = await takeScreenshot()
+    if (requestSessionGeneration !== sessionGeneration) return
     if (screenshotData && mainWindow && !mainWindow.isDestroyed()) {
       saveScreenshotToDisk(screenshotData)
       const transcriptionText = getTranscriptionText()
@@ -412,8 +422,8 @@ const callbacks: Record<string, () => void> = {
           {
             type: 'text',
             text: transcriptionText
-              ? `这是下一部分截图和语音转录内容：\n${transcriptionText}\n请结合之前所有截图和分析，继续分析解答，不要遗漏任何信息。`
-              : '这是下一部分截图，请结合之前所有截图和分析，继续分析解答，不要遗漏任何信息。'
+              ? `This is the next screen capture with its speech transcript:\n${transcriptionText}\nContinue the analysis using every previous screenshot and do not omit any information.`
+              : 'This is the next screen capture. Continue the analysis using every previous screenshot and do not omit any information.'
           },
           {
             type: 'image',
@@ -430,7 +440,7 @@ const callbacks: Record<string, () => void> = {
       currentStreamContext = streamContext
 
       recentScreenshots.push(screenshotData)
-      recentScreenshots = recentScreenshots.slice(-5) // 限5张
+      recentScreenshots = recentScreenshots.slice(-5) // Keep up to 5
       screenshotCount += 1
       mainWindow.webContents.send('screenshot-taken', screenshotData)
       mainWindow.webContents.send('screenshots-updated', recentScreenshots, screenshotCount)
@@ -582,6 +592,23 @@ const callbacks: Record<string, () => void> = {
     if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
     clearTranscriptionText()
     mainWindow.webContents.send('transcription-cleared')
+  },
+
+  clearSession: () => {
+    const mainWindow = global.mainWindow
+    if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage) return
+
+    abortCurrentStream('new-request')
+    conversationMessages = []
+    recentScreenshots = []
+    screenshotCount = 0
+    hasAppendSeparator = false
+    sessionGeneration += 1
+    resetTranscriptionSession()
+
+    mainWindow.webContents.send('solution-clear')
+    mainWindow.webContents.send('screenshots-updated', [], 0)
+    mainWindow.webContents.send('ai-loading-end')
   }
 }
 
@@ -599,7 +626,8 @@ const clickableActions = new Set([
   'moveMainWindowLeft',
   'moveMainWindowRight',
   'toggleTranscription',
-  'clearTranscription'
+  'clearTranscription',
+  'clearSession'
 ])
 
 function unregisterShortcut(action: string) {

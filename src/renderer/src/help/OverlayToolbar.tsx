@@ -8,11 +8,15 @@ export function OverlayToolbarHelp() {
   const { shortcuts } = useShortcutsStore()
 
   return (
-    <HelpSection Icon={PanelTop} title="悬浮工具条" description="用鼠标点击替代快捷键操作">
+    <HelpSection
+      Icon={PanelTop}
+      title="Overlay Toolbar"
+      description="Use clickable buttons instead of keyboard shortcuts"
+    >
       <p className="text-gray-700">
-        工具条悬浮在主窗口正上方，跟随主窗口移动、随主窗口一起隐藏，透明度也与主窗口保持一致，
-        并且和主窗口一样在共享屏幕时对方不可见。它主要用于两种场景：一是快捷键与考试/面试软件冲突或注册失败时，
-        二是不希望通过键盘触发操作时。
+        The toolbar stays above the main window, follows it when moved or hidden, and uses the same
+        opacity. Like the main window, it is protected from screen capture. Use it when shortcuts
+        conflict with other software or when you prefer mouse controls.
       </p>
       <div className="overlay-toolbar w-fit">
         {TOOLBAR_ACTIONS.map(({ action, Icon }) => (
@@ -36,19 +40,20 @@ export function OverlayToolbarHelp() {
         ))}
       </div>
       <ul className="space-y-1 text-sm text-gray-700 list-disc list-inside">
-        <li>点击按钮不会抢走焦点，做题页面不会失焦，光标也不会有明显的窗口切换动作。</li>
-        <li>开启「鼠标穿透」后主窗口不再响应鼠标，但工具条仍然可以点击。</li>
+        <li>Clicking a button does not take focus away from the page underneath.</li>
+        <li>The toolbar remains clickable while mouse passthrough is enabled.</li>
         <li>
-          在「设置 → 界面设置 →
-          悬停触发」中可以改为：鼠标在按钮上停留一段时间即触发，全程不产生点击。
-          停留过程中按钮下方会有进度条，中途移开即取消；触发后需移开再移回才会再次触发。
+          Settings → Appearance Settings → Hover activation can trigger buttons without a click.
+          Moving away cancels the progress; move away and back to trigger the same action again.
         </li>
         <li>
-          拖动工具条的左右边缘可以调整它的宽度（高度固定）。边缘不会出现缩放光标，但照样可以拖。
-          按钮尺寸保持不变，宽度不够时会从右侧开始隐藏放不下的按钮。
+          Drag the toolbar&apos;s left or right edge to resize its width. Buttons keep their size,
+          and buttons that no longer fit are hidden from the right.
         </li>
-        <li>隐藏/显示主窗口没有做成按钮：窗口隐藏后工具条也会一起隐藏，只能用快捷键唤回。</li>
-        <li>如不需要，可在「设置 → 界面设置 → 悬浮工具条」中关闭。</li>
+        <li>
+          The hide/show action remains shortcut-only because the toolbar hides with the window.
+        </li>
+        <li>Disable the toolbar under Settings → Appearance Settings → Overlay toolbar.</li>
       </ul>
     </HelpSection>
   )
