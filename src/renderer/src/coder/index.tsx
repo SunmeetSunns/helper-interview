@@ -90,9 +90,14 @@ export default function CoderPage() {
       setIsTranscribing(false)
       stopAudioCapture()
     })
-    window.api.onTranscriptionStopped(() => {
+    window.api.onTranscriptionStopped((result) => {
       setIsTranscribing(false)
       stopAudioCapture()
+      if (result?.submit) {
+        void window.api.getTranscriptionText().then((transcript) => {
+          if (transcript.trim()) window.api.submitTranscription(transcript)
+        })
+      }
     })
     window.api.onTranscriptionCleared(() => {
       clearText()

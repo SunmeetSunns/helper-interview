@@ -34,6 +34,10 @@ function extractErrorMessage(error: unknown): string {
     data?: unknown
   }
 
+  if (apiError.statusCode === 503 || /service unavailable|503 unavailable/i.test(error.message)) {
+    return 'Gemini is temporarily unavailable after automatic retries. Try again shortly or select gemini-3.5-flash-lite in Settings.'
+  }
+
   // Try to parse responseBody for detailed message
   if (apiError.responseBody) {
     try {
@@ -92,6 +96,8 @@ let screenshotCount = 0
 let hasAppendSeparator = false
 /** Invalidates screenshot captures that were still pending when the session was cleared. */
 let sessionGeneration = 0
+/** Invalidates transcription-only generations when the session is cleared or another request starts. */
+let transcriptRequestGeneration = 0
 
 const FRONT_REASSERT_DURATION = 8000
 const FRONT_REASSERT_INTERVAL = 100
@@ -247,6 +253,62 @@ function abortCurrentStream(reason: AbortReason) {
   if (!currentStreamContext) return
   currentStreamContext.reason = reason
   currentStreamContext.controller.abort()
+}
+
+async function generateFromTranscript(transcript: string) {
+  const mainWindow = global.mainWindow
+  if (!mainWindow || mainWindow.isDestroyed() || !state.inCoderPage || !settings.apiKey) return
+
+  abortCurrentStream('new-request')
+  const requestGeneration = ++transcriptRequestGeneration
+  const streamContext: StreamContext = {
+    controller: new AbortController(),
+    reason: null
+  }
+  currentStreamContext = streamContext
+
+  const userMessage: ModelMessage = {
+    role: 'user',
+    content: [{ type: 'text', text: transcript }]
+  }
+  const messages = [...conversationMessages, userMessage]
+  mainWindow.webContents.send('solution-clear')
+  mainWindow.webContents.send('ai-loading-start')
+
+  let assistantResponse = ''
+  let endedNaturally = true
+  try {
+    const solutionStream = getSolutionStream(messages, streamContext.controller.signal)
+    for await (const chunk of solutionStream) {
+      if (streamContext.controller.signal.aborted) {
+        endedNaturally = false
+        break
+      }
+      assistantResponse += chunk
+      mainWindow.webContents.send('solution-chunk', chunk)
+    }
+
+    if (streamContext.controller.signal.aborted) {
+      if (streamContext.reason === 'user') mainWindow.webContents.send('solution-stopped')
+    } else if (endedNaturally && requestGeneration === transcriptRequestGeneration) {
+      conversationMessages.push(userMessage)
+      if (assistantResponse) {
+        conversationMessages.push({ role: 'assistant', content: assistantResponse })
+      }
+      mainWindow.webContents.send('solution-complete')
+    }
+  } catch (error) {
+    if (!streamContext.controller.signal.aborted) {
+      endedNaturally = false
+      console.error('Error generating answer from transcript:', error)
+      mainWindow.webContents.send('solution-error', extractErrorMessage(error))
+    } else if (streamContext.reason === 'user') {
+      mainWindow.webContents.send('solution-stopped')
+    }
+  } finally {
+    if (currentStreamContext === streamContext) currentStreamContext = null
+    if (!mainWindow.isDestroyed()) mainWindow.webContents.send('ai-loading-end')
+  }
 }
 
 const callbacks: Record<string, () => void> = {
@@ -604,6 +666,7 @@ const callbacks: Record<string, () => void> = {
     screenshotCount = 0
     hasAppendSeparator = false
     sessionGeneration += 1
+    transcriptRequestGeneration += 1
     resetTranscriptionSession()
 
     mainWindow.webContents.send('solution-clear')
@@ -611,6 +674,11 @@ const callbacks: Record<string, () => void> = {
     mainWindow.webContents.send('ai-loading-end')
   }
 }
+
+ipcMain.on('transcription-submit', (_event, transcript: string) => {
+  if (typeof transcript !== 'string' || !transcript.trim()) return
+  void generateFromTranscript(transcript.trim())
+})
 
 const clickableActions = new Set([
   'takeScreenshot',

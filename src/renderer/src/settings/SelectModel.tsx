@@ -15,6 +15,8 @@ import {
 
 const defaultModels = [
   { value: 'gemini-3.8-flash', label: 'gemini-3.8-flash' },
+  { value: 'gemini-3.7-flash', label: 'gemini-3.7-flash' },
+  { value: 'gemini-3.5-flash-lite', label: 'gemini-3.5-flash-lite' },
   {
     value: 'deepseek/deepseek-v4-flash-vision-exp',
     label: 'deepseek/deepseek-v4-flash-vision-exp'

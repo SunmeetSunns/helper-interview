@@ -61,7 +61,7 @@ function finishTranscription() {
   currentPartial = ''
   cleanup()
   emitTranscriptionText(false)
-  sendToRenderer('transcription-stopped')
+  sendToRenderer('transcription-stopped', { submit: true })
 }
 
 function startTranscription(apiKey: string) {
@@ -70,7 +70,7 @@ function startTranscription(apiKey: string) {
   const normalizedApiKey = normalizeApiKey(apiKey)
   if (!normalizedApiKey) {
     sendToRenderer('transcription-error', 'Configure your AssemblyAI API key in Settings first')
-    sendToRenderer('transcription-stopped')
+    sendToRenderer('transcription-stopped', { submit: false })
     return
   }
 
@@ -114,7 +114,7 @@ function startTranscription(apiKey: string) {
         console.error('AssemblyAI transcription error:', errorMessage)
         sendToRenderer('transcription-error', errorMessage)
         cleanup()
-        sendToRenderer('transcription-stopped')
+        sendToRenderer('transcription-stopped', { submit: false })
       }
     } catch (error) {
       console.error('Failed to parse AssemblyAI transcription message:', error)
@@ -125,7 +125,7 @@ function startTranscription(apiKey: string) {
     console.error('AssemblyAI transcription WebSocket error:', error)
     sendToRenderer('transcription-error', error.message || 'WebSocket connection failed')
     cleanup()
-    sendToRenderer('transcription-stopped')
+    sendToRenderer('transcription-stopped', { submit: false })
   })
 
   ws.on('close', (code, reason) => {
@@ -151,7 +151,7 @@ function startTranscription(apiKey: string) {
           detail || `AssemblyAI transcription connection closed (${code})`
         )
       }
-      sendToRenderer('transcription-stopped')
+      sendToRenderer('transcription-stopped', { submit: true })
     }
   })
 }
@@ -191,7 +191,7 @@ export function resetTranscriptionSession() {
   cleanup()
   clearTranscriptionText()
   sendToRenderer('transcription-cleared')
-  sendToRenderer('transcription-stopped')
+  sendToRenderer('transcription-stopped', { submit: false })
 }
 
 ipcMain.handle('start-transcription', (_event, apiKey: string) => {

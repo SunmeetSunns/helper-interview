@@ -191,6 +191,7 @@ const api = {
   stopTranscription: () => ipcRenderer.invoke('stop-transcription'),
   sendTranscriptionAudioChunk: (chunk: ArrayBuffer) =>
     ipcRenderer.send('transcription-audio-chunk', chunk),
+  submitTranscription: (transcript: string) => ipcRenderer.send('transcription-submit', transcript),
   getTranscriptionText: () => ipcRenderer.invoke('get-transcription-text') as Promise<string>,
 
   onToggleTranscription: (callback: () => void) => {
@@ -211,8 +212,8 @@ const api = {
   removeTranscriptionErrorListener: () => {
     ipcRenderer.removeAllListeners('transcription-error')
   },
-  onTranscriptionStopped: (callback: () => void) => {
-    ipcRenderer.on('transcription-stopped', callback)
+  onTranscriptionStopped: (callback: (result: { submit: boolean }) => void) => {
+    ipcRenderer.on('transcription-stopped', (_event, result) => callback(result))
   },
   removeTranscriptionStoppedListener: () => {
     ipcRenderer.removeAllListeners('transcription-stopped')
