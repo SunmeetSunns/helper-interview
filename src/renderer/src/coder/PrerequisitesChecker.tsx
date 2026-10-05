@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/lib/store/settings'
 import { Button } from '@/components/ui/button'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai'
 
 export function PrerequisitesChecker() {
   const navigate = useNavigate()
@@ -16,7 +17,10 @@ export function PrerequisitesChecker() {
   const saveApiSettings = async () => {
     const apiKey = inputApiKey.trim().replace(/^Bearer\s+/i, '')
     const configuredBaseURL = inputApiBaseURL.trim().replace(/\/+$/, '')
-    const apiBaseURL = configuredBaseURL || (apiKey.startsWith('sk-or-') ? OPENROUTER_BASE_URL : '')
+    const isGeminiKey = apiKey.startsWith('AIza') || apiKey.startsWith('AQ.')
+    const apiBaseURL = isGeminiKey
+      ? GEMINI_BASE_URL
+      : configuredBaseURL || (apiKey.startsWith('sk-or-') ? OPENROUTER_BASE_URL : '')
 
     // Sync credentials before hiding the setup screen. The global screenshot
     // shortcut runs in the main process and may otherwise beat App's effect sync.
@@ -35,7 +39,7 @@ export function PrerequisitesChecker() {
       <div className="m-auto bg-white rounded-lg p-6 pt-1 w-120 shadow-lg">
         <h1 className="text-xl font-bold text-center mb-2">Welcome to Screenshot Assistant</h1>
         <div className="text-sm text-gray-600">
-          To get started, configure an AI provider such as
+          To get started, configure an AI provider such as Gemini,{' '}
           <a
             href="https://cloud.siliconflow.cn/i/SG8C0772"
             target="_blank"

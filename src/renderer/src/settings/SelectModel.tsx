@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/command'
 
 const defaultModels = [
+  { value: 'gemini-3.8-flash', label: 'gemini-3.8-flash' },
   {
     value: 'deepseek/deepseek-v4-flash-vision-exp',
     label: 'deepseek/deepseek-v4-flash-vision-exp'

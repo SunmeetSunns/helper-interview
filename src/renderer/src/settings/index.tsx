@@ -147,7 +147,8 @@ export default function SettingsPage() {
               <label className="text-sm font-medium">
                 API Base URL
                 <span className="ml-2 text-xs font-light">
-                  For example, OpenRouter: https://openrouter.ai/api/v1
+                  Gemini keys are detected automatically; for example, OpenRouter:
+                  https://openrouter.ai/api/v1
                 </span>
               </label>
               <input
@@ -155,7 +156,7 @@ export default function SettingsPage() {
                 value={apiBaseURL}
                 onChange={(e) => updateSetting('apiBaseURL', e.target.value)}
                 className="w-60 px-3 py-2 border border-gray-300 rounded-md bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Optional; defaults to the OpenAI API"
+                placeholder="URL only — do not paste a curl command"
               />
             </div>
 
